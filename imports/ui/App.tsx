@@ -1,5 +1,4 @@
 import React from "react";
-import Clicker from "./Clicker";
 import Home from "./Home";
 import Book from "./Book";
 import {
@@ -20,9 +19,6 @@ function Layout({ children }: LayoutProps) {
             <div className="nav">
                 <NavLink exact to="/">
                     Go home
-                </NavLink>
-                <NavLink exact to="/clicker">
-                    Click a button
                 </NavLink>
             </div>
             {children}
@@ -52,7 +48,6 @@ export const App = () => (
                         <Book name={match.params.name} />
                     )}
                 />
-                <Route path="/clicker" component={Clicker} />
                 <Route component={Error404} />
             </Switch>
         </Layout>

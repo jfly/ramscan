@@ -19,6 +19,13 @@ const Books = () => {
         };
     });
 
+    function handleAddBook() {
+        const bookName = prompt("What is the name of your new book?");
+        if (bookName) {
+            Meteor.call("books.add", bookName);
+        }
+    }
+
     return (
         <ul>
             {books.map((book) => (
@@ -26,6 +33,9 @@ const Books = () => {
                     <Link to={`/book/${book.name}`}>{book.name}</Link>
                 </li>
             ))}
+            <li>
+                <button onClick={handleAddBook}>Add new book</button>
+            </li>
         </ul>
     );
 };

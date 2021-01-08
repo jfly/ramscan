@@ -67,4 +67,4 @@ function difference<T>(setA: Set<T>, setB: Set<T>): Set<T> {
     return diff;
 }
 
-export { syncForever };
+export { syncForever, getPublicDir };
