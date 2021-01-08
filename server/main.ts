@@ -1,34 +1,14 @@
 import { Meteor } from 'meteor/meteor';
-import { LinksCollection } from '/imports/api/links';
-import { ClicksCollection } from '/imports/api/clicks';
-
-function insertLink(title: string, url: string) {
-  LinksCollection.insert({ title, url, createdAt: new Date() });
-}
+import { ClicksCollection } from '/imports/db/clicks';
+import '/imports/api/methods';
+import sync from './sync';
 
 Meteor.startup(() => {
-  // If the Links collection is empty, add some data.
-  if (LinksCollection.find().count() === 0) {
-    insertLink(
-      'Do the Tutorial',
-      'https://www.meteor.com/tutorials/react/creating-an-app'
-    );
+    console.log(`Found ${ClicksCollection.find().count()} clicks`);
 
-    insertLink(
-      'Follow the Guide',
-      'http://guide.meteor.com'
-    );
-
-    insertLink(
-      'Read the Docs',
-      'https://docs.meteor.com'
-    );
-
-    insertLink(
-      'Discussions',
-      'https://forums.meteor.com'
-    );
-  }
-
-  console.log(`Found ${ClicksCollection.find().count()} clicks`);
+    function syncForever() {
+        sync();
+        Meteor.setTimeout(syncForever, 1000);
+    }
+    syncForever();
 });
