@@ -1,2 +1,6 @@
+# Third party stuff
 node_modules/
+tsconfig.tsbuildinfo
+
+# Ours
 public/docs

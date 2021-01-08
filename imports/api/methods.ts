@@ -1,8 +1,8 @@
-import { Meteor } from 'meteor/meteor';
-import { ClicksCollection} from '/imports/db/clicks';
+import { Meteor } from "meteor/meteor";
+import { ClicksCollection } from "/imports/db/clicks";
 
 Meteor.methods({
-    'clicks.add'() {
+    "clicks.add"() {
         ClicksCollection.insert({ createdAt: new Date() });
-    }
+    },
 });
