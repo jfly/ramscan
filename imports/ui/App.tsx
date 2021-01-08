@@ -1,7 +1,7 @@
 import React from "react";
 import Clicker from "./Clicker";
 import Home from "./Home";
-import Doc from "./Doc";
+import Book from "./Book";
 import {
     BrowserRouter as Router,
     Switch,
@@ -45,11 +45,11 @@ export const App = () => (
                 <Route exact path="/" component={Home} />
                 <Route
                     exact
-                    path="/doc/:name"
+                    path="/book/:name"
                     render={({
                         match,
                     }: RouteComponentProps<MatchNameParams>) => (
-                        <Doc name={match.params.name} />
+                        <Book name={match.params.name} />
                     )}
                 />
                 <Route path="/clicker" component={Clicker} />

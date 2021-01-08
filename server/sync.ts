@@ -1,6 +1,9 @@
+import _ from "lodash";
+import { Meteor } from "meteor/meteor";
 import fs from "fs";
 import path from "path";
-import { DocsCollection } from "/imports/db/docs";
+import { FilesCollection } from "/imports/db/files";
+import chokidar from "chokidar";
 
 function getPublicDir() {
     if (!process.env.PWD) {
@@ -9,26 +12,49 @@ function getPublicDir() {
     return path.join(process.env.PWD, "public");
 }
 
-function sync() {
-    console.log("syncing...");
-    const docsDir = path.join(getPublicDir(), "docs");
-    const expectedDocs = new Set(fs.readdirSync(docsDir));
-    const actualDocs = new Set(
-        DocsCollection.find()
-            .fetch()
-            .map((d) => d.name)
-    );
+function syncForever() {
+    syncImmediately();
+    chokidar
+        .watch(getPublicDir())
+        .on("all", _.debounce(Meteor.bindEnvironment(syncImmediately), 100));
+}
 
-    const extra = difference(actualDocs, expectedDocs);
-    for (let item of extra) {
-        console.log(`Removing extra doc: ${item}`);
-        DocsCollection.remove({ name: item });
+function syncImmediately() {
+    console.log("syncing...");
+    syncDirectory(getPublicDir(), "/");
+}
+
+function syncDirectory(root: string, directory: string) {
+    console.log(`syncing ${directory}`);
+    const newChildPublicPaths = new Set(
+        fs
+            .readdirSync(path.join(root, directory))
+            .map((child) => path.join(directory, child))
+    );
+    for (const childPublicPath of newChildPublicPaths) {
+        if (fs.lstatSync(path.join(root, childPublicPath)).isDirectory()) {
+            syncDirectory(root, childPublicPath);
+        }
     }
 
-    const missing = difference(expectedDocs, actualDocs);
-    for (let item of missing) {
-        console.log(`Adding missing doc: ${item}`);
-        DocsCollection.insert({ name: item });
+    const oldChildPublicPaths = new Set(
+        FilesCollection.find({ parent: directory })
+            .fetch()
+            .map((f) => f.publicPath)
+    );
+
+    const extra = difference(oldChildPublicPaths, newChildPublicPaths);
+    for (let path of extra) {
+        console.log(`Removing extra file: ${path}`);
+        FilesCollection.remove({ publicPath: path });
+    }
+    const missing = difference(newChildPublicPaths, oldChildPublicPaths);
+    for (let path of missing) {
+        console.log(`Adding missing file: ${path}`);
+        FilesCollection.insert({
+            parent: directory,
+            publicPath: path,
+        });
     }
 }
 
@@ -41,4 +67,4 @@ function difference<T>(setA: Set<T>, setB: Set<T>): Set<T> {
     return diff;
 }
 
-export default sync;
+export { syncForever };

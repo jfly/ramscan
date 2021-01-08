@@ -1,18 +1,29 @@
+import { Meteor } from "meteor/meteor";
 import React from "react";
 import { useTracker } from "meteor/react-meteor-data";
-import { DocsCollection } from "/imports/db/docs";
+import { FilesCollection } from "/imports/db/files";
 import { Link } from "react-router-dom";
 
-const Docs = () => {
-    const docs = useTracker(() => {
-        return DocsCollection.find().fetch();
+const Books = () => {
+    const files = useTracker(() => {
+        Meteor.subscribe("files/books");
+        return FilesCollection.find({ parent: "/books" }).fetch();
+    });
+
+    const books = files.map((file) => {
+        return {
+            _id: file._id,
+            // Extract just the filename by removing the parent directory from
+            // the full path.
+            name: file.publicPath.substring((file.parent + "/").length),
+        };
     });
 
     return (
         <ul>
-            {docs.map((doc) => (
-                <li key={doc._id}>
-                    <Link to={`/doc/${doc.name}`}>{doc.name}</Link>
+            {books.map((book) => (
+                <li key={book._id}>
+                    <Link to={`/book/${book.name}`}>{book.name}</Link>
                 </li>
             ))}
         </ul>
@@ -20,7 +31,7 @@ const Docs = () => {
 };
 
 const Home = () => {
-    return <Docs />;
+    return <Books />;
 };
 
 export default Home;
