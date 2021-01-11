@@ -3,6 +3,9 @@ import React from "react";
 import { useTracker } from "meteor/react-meteor-data";
 import { FilesCollection } from "/imports/db/files";
 import { Link } from "react-router-dom";
+import { Button } from "@material-ui/core";
+import { paths } from "./Routes";
+import { LastPage } from "/imports/types/book";
 
 const Books = () => {
     const files = useTracker(() => {
@@ -30,11 +33,15 @@ const Books = () => {
         <ul>
             {books.map((book) => (
                 <li key={book._id}>
-                    <Link to={`/book/${book.name}`}>{book.name}</Link>
+                    <Link to={paths.book(book.name, LastPage)}>
+                        {book.name}
+                    </Link>
                 </li>
             ))}
             <li>
-                <button onClick={handleAddBook}>Add new book</button>
+                <Button onClick={handleAddBook} color="primary">
+                    Add new book
+                </Button>
             </li>
         </ul>
     );

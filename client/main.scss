@@ -1,10 +1,38 @@
+html {
+    height: 100%;
+}
 body {
-    padding: 10px;
+    height: 100%;
     font-family: sans-serif;
 }
 
+#react-target {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+}
+
 .nav {
-    a.active {
-        text-decoration: none;
-    }
+    margin: 5px auto 5px auto;
+}
+
+img {
+    max-width: 100%;
+    max-height: 100%;
+    align-self: center;
+
+    // On desktop, dragging an image will trigger an actual drag operation that
+    // messes with the dragging we're trying to do. This disables that native
+    // drag functionality.
+    // https://stackoverflow.com/a/16283142/1739415
+    // https://github.com/arqex/react-interactable
+    -webkit-user-drag: none;
+}
+
+.pageImgSwipeWrapper {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
 }
