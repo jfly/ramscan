@@ -35,43 +35,40 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
     const history = useHistory();
 
     const book = page.book;
-    const absPageNumber = page.absPageNumber;
 
-    let backText;
-    let handleBack;
-    if (absPageNumber == 1) {
-        backText = "";
-        handleBack = null;
-    } else {
-        backText = "Prev page";
+    const prevPage = page.prevPage;
+    let handleBack, prevEl;
+    if (prevPage) {
         handleBack = () =>
-            history.push(paths.book(book.name, absPageNumber - 1));
-    }
-    let nextText;
-    let handleNext;
-    if (absPageNumber == book.pages.length) {
-        nextText = "Scan new page";
-        handleNext = () => {}; // <<< TODO
+            history.push(paths.book(book.name, prevPage.pageNumber));
+        prevEl = prevPage && <img className="prevImg" src={prevPage.imgPath} />;
     } else {
-        nextText = "Next page";
-        handleNext = () =>
-            history.push(paths.book(book.name, absPageNumber + 1));
+        handleBack = null;
+        prevEl = null;
     }
 
-    let upText = "Delete";
+    const nextPage = page.nextPage;
+    let handleNext, nextEl;
+    if (nextPage) {
+        handleNext = () =>
+            history.push(paths.book(book.name, nextPage.pageNumber));
+        nextEl = <img src={nextPage.imgPath} />;
+    } else {
+        handleNext = () => {}; // <<< TODO
+        nextEl = <div className="scanMessage">Scan new page</div>;
+    }
+
+    let upEl = <div className="deleteMessage">Delete</div>;
     let handleUp = () => {};
 
     return (
         <Swipeable
-            leftText={nextText}
-            onLeft={handleNext}
-            rightText={backText}
-            onRight={handleBack}
-            upText={upText}
+            prevEl={prevEl}
+            onPrev={handleBack}
+            nextEl={nextEl}
+            onNext={handleNext}
+            upEl={upEl}
             onUp={handleUp}
-            key={
-                absPageNumber
-            } /* Force the animation to stop when the image changes */
         >
             <img src={page.imgPath} />
         </Swipeable>

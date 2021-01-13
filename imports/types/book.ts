@@ -73,6 +73,22 @@ class Page {
     get imgPath() {
         return this.#file.publicPath;
     }
+
+    private offsetPage(offset: number) {
+        const absPageNumber = this.absPageNumber + offset;
+        if (absPageNumber <= 0 || absPageNumber > this.#book.pages.length) {
+            return null;
+        }
+        return this.#book.getPage(absPageNumber);
+    }
+
+    get nextPage() {
+        return this.offsetPage(+1);
+    }
+
+    get prevPage() {
+        return this.offsetPage(-1);
+    }
 }
 
 export default Book;

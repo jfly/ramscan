@@ -3,8 +3,8 @@ import Interactable from "react-interactable";
 import { Animated } from "react-native";
 
 enum SwipeDirection {
-    LEFT,
-    RIGHT,
+    NEXT,
+    PREV,
     UP,
 }
 type SnapPoint = {
@@ -12,6 +12,19 @@ type SnapPoint = {
     x?: number;
     y?: number;
     damping?: number;
+};
+
+type SpringPoint = {
+    x?: number;
+    y?: number;
+    tension?: number;
+    damping?: number;
+    influenceArea?: {
+        left?: number;
+        right?: number;
+        top?: number;
+        bottom?: number;
+    };
 };
 
 /*
@@ -40,31 +53,50 @@ const HorizontalOrVerticalDraggableView: any = class extends Interactable.View {
 type SwipeableProps = {
     children: React.ReactNode;
 
-    leftText?: string;
-    onLeft: (() => void) | null;
+    nextEl: React.ReactNode;
+    onNext: (() => void) | null;
 
-    rightText?: string;
-    onRight: (() => void) | null;
+    prevEl: React.ReactNode;
+    onPrev: (() => void) | null;
 
-    upText?: string;
+    upEl: React.ReactNode;
     onUp: (() => void) | null;
 };
 function Swipeable({
     children,
-    leftText,
-    onLeft,
-    rightText,
-    onRight,
-    upText,
+    nextEl,
+    onNext,
+    prevEl,
+    onPrev,
+    upEl,
     onUp,
 }: SwipeableProps) {
-    const snapPoints: SnapPoint[] = [{ id: null, x: 0, y: 0, damping: 0.8 }];
+    const snapPoints: SnapPoint[] = [{ id: null, x: 0, y: 0 }];
+    const springPoints: SpringPoint[] = [];
 
-    if (onRight) {
-        snapPoints.push({ id: SwipeDirection.RIGHT, x: 150, y: 0 });
+    if (onPrev) {
+        snapPoints.push({ id: SwipeDirection.PREV, x: 150, y: 0 });
+    } else {
+        // There's no next element. Add a spring to make it more difficult to
+        // swipe right.
+        springPoints.push({
+            x: 0,
+            tension: 6000,
+            damping: 0.5,
+            influenceArea: { left: 0 },
+        });
     }
-    if (onLeft) {
-        snapPoints.push({ id: SwipeDirection.LEFT, x: -150, y: 0 });
+    if (onNext) {
+        snapPoints.push({ id: SwipeDirection.NEXT, x: -150, y: 0 });
+    } else {
+        // There's no next element. Add a spring to make it more difficult to
+        // swipe left.
+        springPoints.push({
+            x: 0,
+            tension: 6000,
+            damping: 0.5,
+            influenceArea: { right: 0 },
+        });
     }
     if (onUp) {
         snapPoints.push({ id: SwipeDirection.UP, x: 0, y: -300 });
@@ -74,87 +106,33 @@ function Swipeable({
     const deltaY = new Animated.Value(0);
     function handleSnap({ id }: { id: SwipeDirection }) {
         const handler = {
-            [SwipeDirection.LEFT]: onLeft,
-            [SwipeDirection.RIGHT]: onRight,
+            [SwipeDirection.NEXT]: onNext,
+            [SwipeDirection.PREV]: onPrev,
             [SwipeDirection.UP]: onUp,
         }[id];
         handler?.();
     }
     return (
         <>
-            <div className="pageImgSwipeWrapper">
-                <div style={{ position: "absolute", left: 0 }}>
-                    <Animated.Text
-                        style={[
-                            {
-                                opacity: deltaX.interpolate({
-                                    inputRange: [0, 150],
-                                    outputRange: [0, 1],
-                                    extrapolateLeft: "clamp",
-                                    extrapolateRight: "clamp",
-                                }),
-                                fontSize: "50px",
-                                width: "150px",
-                                display: "block",
-                                textAlign: "center",
-                            },
-                        ]}
-                    >
-                        {rightText}
-                    </Animated.Text>
-                </div>
-                <div style={{ position: "absolute", right: 0 }}>
-                    <Animated.Text
-                        style={[
-                            {
-                                opacity: deltaX.interpolate({
-                                    inputRange: [-150, 0],
-                                    outputRange: [1, 0],
-                                    extrapolateLeft: "clamp",
-                                    extrapolateRight: "clamp",
-                                }),
-                                fontSize: "50px",
-                                width: "150px",
-                                display: "block",
-                                textAlign: "center",
-                            },
-                        ]}
-                    >
-                        {leftText}
-                    </Animated.Text>
-                </div>
-                <div style={{ position: "absolute", bottom: 0, width: "100%" }}>
-                    <Animated.Text
-                        style={[
-                            {
-                                opacity: deltaY.interpolate({
-                                    inputRange: [-150, 0],
-                                    outputRange: [1, 0],
-                                    extrapolateLeft: "clamp",
-                                    extrapolateRight: "clamp",
-                                }),
-                                fontSize: "50px",
-                                display: "block",
-                                textAlign: "center",
-                            },
-                        ]}
-                    >
-                        {upText}
-                    </Animated.Text>
-                </div>
+            <div className="swipeable">
                 <HorizontalOrVerticalDraggableView
+                    dragWithSpring={{ tension: 2000, damping: 0.5 }}
+                    boundaries={{ bottom: 0 }}
                     snapPoints={snapPoints}
                     onSnap={handleSnap}
                     animatedValueX={deltaX}
                     animatedValueY={deltaY}
-                    boundaries={{ bottom: 0 }}
+                    springPoints={springPoints}
                     style={{
                         width: "100%",
                         height: "100%",
                         justifyContent: "center",
                     }}
                 >
+                    <div className="prev">{prevEl}</div>
                     {children}
+                    <div className="next">{nextEl}</div>
+                    <div className="up">{upEl}</div>
                 </HorizontalOrVerticalDraggableView>
             </div>
         </>
