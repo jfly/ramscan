@@ -58,12 +58,17 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
             history.push(paths.book(book.name, absPageNumber + 1));
     }
 
+    let upText = "Delete";
+    let handleUp = () => {};
+
     return (
         <Swipeable
             leftText={nextText}
             onLeft={handleNext}
             rightText={backText}
             onRight={handleBack}
+            upText={upText}
+            onUp={handleUp}
             key={
                 absPageNumber
             } /* Force the animation to stop when the image changes */
