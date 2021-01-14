@@ -36,7 +36,8 @@ img {
     position: relative;
     overflow: hidden;
 
-    .prev, .next {
+    .prev,
+    .next {
         display: flex;
         justify-content: center;
         width: 100%;

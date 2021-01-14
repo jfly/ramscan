@@ -1,7 +1,7 @@
 import React from "react";
 import Interactable from "react-interactable";
 import { Animated } from "react-native";
-import { useWindowSize } from "./hooks";
+import { useWindowSize, useKeyPress } from "./hooks";
 
 enum SwipeDirection {
     NEXT,
@@ -78,6 +78,18 @@ function Swipeable({
     onUp,
 }: SwipeableProps) {
     const windowSize = useWindowSize();
+    useKeyPress({
+        onKeyDown(ev) {
+            const events = {
+                ArrowRight: onNext,
+                ArrowLeft: onPrev,
+                ArrowUp: onUp,
+            } as Record<string, () => void>;
+            events[ev.code]?.();
+        },
+        onKeyUp() {},
+    });
+
     if (!windowSize.width) {
         return null;
     }

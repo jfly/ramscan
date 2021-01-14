@@ -48,4 +48,21 @@ function useWindowSize() {
     return windowSize;
 }
 
-export { useBook, useWindowSize };
+type UseKeyPressProps = {
+    onKeyDown: (ev: KeyboardEvent) => void;
+    onKeyUp: (ev: KeyboardEvent) => void;
+};
+function useKeyPress({ onKeyDown, onKeyUp }: UseKeyPressProps) {
+    // Add event listeners
+    useEffect(() => {
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
+        // Remove event listeners on cleanup
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("keyup", onKeyUp);
+        };
+    }, []); // Empty array ensures that effect is only run on mount and unmount
+}
+
+export { useBook, useWindowSize, useKeyPress };
