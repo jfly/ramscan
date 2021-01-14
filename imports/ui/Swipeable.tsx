@@ -1,30 +1,36 @@
 import React from "react";
 import Interactable from "react-interactable";
 import { Animated } from "react-native";
+import { useWindowSize } from "./hooks";
 
 enum SwipeDirection {
     NEXT,
     PREV,
     UP,
 }
-type SnapPoint = {
-    id: SwipeDirection | null;
+
+type Point = {
     x?: number;
     y?: number;
-    damping?: number;
 };
 
-type SpringPoint = {
-    x?: number;
-    y?: number;
+type SnapPoint = Point & {
+    id: SwipeDirection | null;
+    damping?: number;
+    tension?: number;
+};
+
+type InfluenceArea = {
+    left?: number;
+    right?: number;
+    top?: number;
+    bottom?: number;
+};
+
+type SpringPoint = Point & {
     tension?: number;
     damping?: number;
-    influenceArea?: {
-        left?: number;
-        right?: number;
-        top?: number;
-        bottom?: number;
-    };
+    influenceArea?: InfluenceArea;
 };
 
 /*
@@ -71,11 +77,23 @@ function Swipeable({
     upEl,
     onUp,
 }: SwipeableProps) {
+    const windowSize = useWindowSize();
+    if (!windowSize.width) {
+        return null;
+    }
+
+    const horizontalDragDistance = windowSize.width;
     const snapPoints: SnapPoint[] = [{ id: null, x: 0, y: 0 }];
     const springPoints: SpringPoint[] = [];
 
     if (onPrev) {
-        snapPoints.push({ id: SwipeDirection.PREV, x: 150, y: 0 });
+        snapPoints.push({
+            id: SwipeDirection.PREV,
+            x: horizontalDragDistance,
+            y: 0,
+            tension: 5000,
+            damping: 0.2,
+        });
     } else {
         // There's no next element. Add a spring to make it more difficult to
         // swipe right.
@@ -83,11 +101,17 @@ function Swipeable({
             x: 0,
             tension: 6000,
             damping: 0.5,
-            influenceArea: { left: 0 },
+            influenceArea: { left: 0, top: 0, bottom: 0 },
         });
     }
     if (onNext) {
-        snapPoints.push({ id: SwipeDirection.NEXT, x: -150, y: 0 });
+        snapPoints.push({
+            id: SwipeDirection.NEXT,
+            x: -horizontalDragDistance,
+            y: 0,
+            tension: 5000,
+            damping: 0.2,
+        });
     } else {
         // There's no next element. Add a spring to make it more difficult to
         // swipe left.
@@ -95,11 +119,11 @@ function Swipeable({
             x: 0,
             tension: 6000,
             damping: 0.5,
-            influenceArea: { right: 0 },
+            influenceArea: { right: 0, top: 0, bottom: 0 },
         });
     }
     if (onUp) {
-        snapPoints.push({ id: SwipeDirection.UP, x: 0, y: -300 });
+        snapPoints.push({ id: SwipeDirection.UP, x: 0, y: -200 });
     }
 
     const deltaX = new Animated.Value(0);
