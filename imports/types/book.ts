@@ -41,14 +41,20 @@ class Book {
             .filter((n) => !isNaN(n));
         const lastPageNumber = Math.max(...numbers);
         this.#pages = [];
-        for (let pageNumber = 1; pageNumber <= lastPageNumber; pageNumber++) {
-            if (fileByName[pageNumber]) {
+        for (
+            let absPageNumber = 1;
+            absPageNumber <= lastPageNumber;
+            absPageNumber++
+        ) {
+            const pageNumber =
+                absPageNumber == lastPageNumber ? LastPage : absPageNumber;
+            if (fileByName[absPageNumber]) {
                 this.#pages.push(
-                    new FilePage(this, pageNumber, fileByName[pageNumber])
+                    new FilePage(this, pageNumber, fileByName[absPageNumber])
                 );
-            } else if (scanByName[pageNumber]) {
+            } else if (scanByName[absPageNumber]) {
                 this.#pages.push(
-                    new ScanPage(this, pageNumber, scanByName[pageNumber])
+                    new ScanPage(this, pageNumber, scanByName[absPageNumber])
                 );
             }
         }
