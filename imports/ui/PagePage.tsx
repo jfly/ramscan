@@ -7,6 +7,7 @@ import Nav from "./Nav";
 import { paths } from "./Routes";
 import { Page } from "/imports/types/book";
 import Swipeable from "./Swipeable";
+import Progress from "./Progress";
 
 type PagePageProps = {
     bookName: string;
@@ -36,7 +37,7 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
     const history = useHistory();
 
     if (page.isScan) {
-        return <div>Scanning... {page.scanProgress * 100}%</div>;
+        return <Progress value={page.scanProgress} description="Scanning" />;
     }
 
     const book = page.book;

@@ -5,11 +5,6 @@ import { bookFolder } from "/imports/types/book";
 import { getProjectRootDir, getUploadsDir } from "./util";
 import { spawn } from "child_process";
 
-// Copied from https://stackoverflow.com/a/39914235/1739415
-function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function getScriptsDir() {
     return path.join(getProjectRootDir(), "scripts");
 }
@@ -20,11 +15,24 @@ function scanFile(scanId: string, absoluteFilePath: string): Promise<void> {
     const scan = spawn(scanScript, [absoluteFilePath]);
 
     return new Promise((resolve, reject) => {
-        scan.stdout.on("data", (data) => {
-            console.log(`stdout: ${data}`);
-        });
+        scan.stdout.on(
+            "data",
+            Meteor.bindEnvironment((data: Buffer) => {
+                const dataStr = data.toString("utf8").trim();
+                if (dataStr.endsWith("%")) {
+                    const progress = parseInt(
+                        dataStr.substring(0, dataStr.length - 1)
+                    );
+                    ScansCollection.update(
+                        { _id: scanId },
+                        { $set: { progress } }
+                    );
+                }
+                console.log(`stdout: ${dataStr}`);
+            })
+        );
 
-        scan.stderr.on("data", (data) => {
+        scan.stderr.on("data", (data: Buffer) => {
             console.error(`stderr: ${data}`);
         });
 
@@ -36,12 +44,6 @@ function scanFile(scanId: string, absoluteFilePath: string): Promise<void> {
                 reject();
             }
         });
-
-        //<<< for (let i = 0; i < 10; i++) {
-        //<<<     await sleep(100);
-        //<<<     const progress = (i + 1) / 10;
-        //<<<     ScansCollection.update({ _id: scanId }, { $set: { progress } });
-        //<<< }
     });
 }
 
