@@ -4,18 +4,18 @@ import fs from "fs";
 import path from "path";
 import { FilesCollection } from "/imports/db/files";
 import chokidar from "chokidar";
-import { getPublicDir } from "./util";
+import { getUploadsDir } from "./util";
 
 function syncForever() {
     syncImmediately();
     chokidar
-        .watch(getPublicDir())
+        .watch(getUploadsDir())
         .on("all", _.debounce(Meteor.bindEnvironment(syncImmediately), 100));
 }
 
 function syncImmediately() {
     console.log("syncing...");
-    syncDirectory(getPublicDir(), "/");
+    syncDirectory(getUploadsDir(), "/");
 }
 
 function syncDirectory(root: string, directory: string) {

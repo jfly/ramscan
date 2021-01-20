@@ -2,7 +2,7 @@ import { Meteor } from "meteor/meteor";
 import path from "path";
 import { ScansCollection } from "/imports/db/scans";
 import { bookFolder } from "/imports/types/book";
-import { getProjectRootDir, getPublicDir } from "./util";
+import { getProjectRootDir, getUploadsDir } from "./util";
 import { spawn } from "child_process";
 
 // Copied from https://stackoverflow.com/a/39914235/1739415
@@ -50,7 +50,7 @@ Meteor.methods({
         // TODO: validate bookname and pageNumber
         const parent = bookFolder(bookName);
         const publicPath = path.join(parent, `${pageNumber}.jpeg`);
-        const absoluteFilePath = path.join(getPublicDir(), publicPath);
+        const absoluteFilePath = path.join(getUploadsDir(), publicPath);
         ScansCollection.remove({ publicPath });
         const scanId = ScansCollection.insert({
             parent,

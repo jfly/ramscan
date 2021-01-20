@@ -3,4 +3,4 @@ node_modules/
 tsconfig.tsbuildinfo
 
 # Ours
-public/books
+uploads/books

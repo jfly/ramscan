@@ -2,6 +2,8 @@
 
     make run
 
+And see it running on http://localhost:3000!
+
 ## Development
 
     make fix

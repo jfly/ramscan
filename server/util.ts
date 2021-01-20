@@ -7,8 +7,8 @@ function getProjectRootDir() {
     return process.env.PWD;
 }
 
-function getPublicDir() {
-    return path.join(getProjectRootDir(), "public");
+function getUploadsDir() {
+    return path.join(getProjectRootDir(), "uploads");
 }
 
-export { getProjectRootDir, getPublicDir };
+export { getProjectRootDir, getUploadsDir };
