@@ -1,4 +1,5 @@
 import React from "react";
+import { Meteor } from "meteor/meteor";
 import { useHistory } from "react-router-dom";
 import { PageNumber } from "/imports/types/book";
 import { useBook } from "/imports/ui/hooks";
@@ -34,6 +35,10 @@ type PageWithNavigationProps = {
 function PageWithNavigation({ page }: PageWithNavigationProps) {
     const history = useHistory();
 
+    if (page.isScan) {
+        return <div>Scanning... {page.scanProgress * 100}%</div>;
+    }
+
     const book = page.book;
 
     const prevPage = page.prevPage;
@@ -41,7 +46,11 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
     if (prevPage) {
         handleBack = () =>
             history.push(paths.book(book.name, prevPage.pageNumber));
-        prevEl = prevPage && <img className="prevImg" src={prevPage.imgPath} />;
+        if (prevPage.isScan) {
+            prevEl = <div>A scan is happening over here</div>;
+        } else {
+            prevEl = <img className="prevImg" src={prevPage.imgPath} />;
+        }
     } else {
         handleBack = null;
         prevEl = null;
@@ -52,9 +61,15 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
     if (nextPage) {
         handleNext = () =>
             history.push(paths.book(book.name, nextPage.pageNumber));
-        nextEl = <img src={nextPage.imgPath} />;
+        if (nextPage.isScan) {
+            nextEl = <div>A scan is happening over here</div>;
+        } else {
+            nextEl = <img src={nextPage.imgPath} />;
+        }
     } else {
-        handleNext = () => {}; // <<< TODO
+        handleNext = () => {
+            Meteor.call("scan", page.book.name, page.absPageNumber + 1);
+        };
         nextEl = <div className="scanMessage">Scan new page</div>;
     }
 

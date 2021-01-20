@@ -1,15 +1,37 @@
 import { useState, useEffect } from "react";
 import { Meteor } from "meteor/meteor";
 import { FilesCollection } from "/imports/db/files";
+import { ScansCollection } from "/imports/db/scans";
 import { useTracker } from "meteor/react-meteor-data";
-import Book from "/imports/types/book";
+import Book, { BOOKS_FOLDER, bookFolder } from "/imports/types/book";
 
 function useBook(name: string) {
     const files = useTracker(() => {
         Meteor.subscribe("files/book", { bookName: name });
-        return FilesCollection.find({ parent: `/books/${name}` }).fetch();
+        return FilesCollection.find({
+            parent: bookFolder(name),
+        }).fetch();
     });
-    return new Book(name, files);
+    const scans = useTracker(() => {
+        Meteor.subscribe("files/scans", { bookName: name });
+        return ScansCollection.find({
+            parent: bookFolder(name),
+        }).fetch();
+    });
+    return new Book(name, files, scans);
+}
+
+function useBooks() {
+    const files = useTracker(() => {
+        Meteor.subscribe("files/books");
+        return FilesCollection.find({ parent: BOOKS_FOLDER }).fetch();
+    });
+
+    return files.map((file) => {
+        // Extract just the filename by removing the parent directory from
+        // the full path.
+        return file.publicPath.substring((file.parent + "/").length);
+    });
 }
 
 type WindowSize = {
@@ -65,4 +87,4 @@ function useKeyPress({ onKeyDown, onKeyUp }: UseKeyPressProps) {
     }, []); // Empty array ensures that effect is only run on mount and unmount
 }
 
-export { useBook, useWindowSize, useKeyPress };
+export { useBook, useBooks, useWindowSize, useKeyPress };

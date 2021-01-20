@@ -4,13 +4,7 @@ import fs from "fs";
 import path from "path";
 import { FilesCollection } from "/imports/db/files";
 import chokidar from "chokidar";
-
-function getPublicDir() {
-    if (!process.env.PWD) {
-        throw "PWD not found";
-    }
-    return path.join(process.env.PWD, "public");
-}
+import { getPublicDir } from "./util";
 
 function syncForever() {
     syncImmediately();
@@ -67,4 +61,4 @@ function difference<T>(setA: Set<T>, setB: Set<T>): Set<T> {
     return diff;
 }
 
-export { syncForever, getPublicDir };
+export { syncForever };

@@ -1,4 +1,13 @@
+import _ from "lodash";
+import path from "path";
 import { File } from "/imports/db/files";
+import { Scan } from "/imports/db/scans";
+
+const BOOKS_FOLDER = "/books";
+
+function bookFolder(bookName: string) {
+    return path.join(BOOKS_FOLDER, bookName);
+}
 
 const LastPage = "last";
 type PageNumber = number | typeof LastPage;
@@ -14,10 +23,35 @@ function parsePageNumber(pageNumberStr: string): PageNumber {
 class Book {
     #name: string;
     #pages: Page[];
-    constructor(name: string, files: File[]) {
+    constructor(name: string, files: File[], scans: Scan[]) {
         this.#name = name;
-        // >>> TODO: sort <<<
-        this.#pages = files.map((file, i) => new Page(this, i + 1, file));
+
+        const fileByName = _.keyBy(files, (file) =>
+            path.basename(file.publicPath, ".jpeg")
+        );
+        const scanByName = _.keyBy(scans, (scan) =>
+            path.basename(scan.publicPath, ".jpeg")
+        );
+        const filenames = [
+            ...Object.keys(fileByName),
+            ...Object.keys(scanByName),
+        ];
+        const numbers = filenames
+            .map((filename) => parseInt(filename))
+            .filter((n) => !isNaN(n));
+        const lastPageNumber = Math.max(...numbers);
+        this.#pages = [];
+        for (let pageNumber = 1; pageNumber <= lastPageNumber; pageNumber++) {
+            if (fileByName[pageNumber]) {
+                this.#pages.push(
+                    new FilePage(this, pageNumber, fileByName[pageNumber])
+                );
+            } else if (scanByName[pageNumber]) {
+                this.#pages.push(
+                    new ScanPage(this, pageNumber, scanByName[pageNumber])
+                );
+            }
+        }
     }
 
     get name() {
@@ -42,14 +76,22 @@ class Book {
     }
 }
 
-class Page {
+class BasePage {
     #book: Book;
-    #file: File;
     #pageNumber: PageNumber;
-    constructor(book: Book, pageNumber: PageNumber, file: File) {
+    #publicPath: string;
+    #parent: string;
+
+    constructor(
+        book: Book,
+        pageNumber: PageNumber,
+        publicPath: string,
+        parent: string
+    ) {
         this.#book = book;
         this.#pageNumber = pageNumber;
-        this.#file = file;
+        this.#publicPath = publicPath;
+        this.#parent = parent;
     }
 
     get book() {
@@ -62,16 +104,6 @@ class Page {
 
     get absPageNumber() {
         return this.book.getAbsolutePageNumber(this.#pageNumber);
-    }
-
-    get name() {
-        return this.#file.publicPath.substring(
-            (this.#file.parent + "/").length
-        );
-    }
-
-    get imgPath() {
-        return this.#file.publicPath;
     }
 
     private offsetPage(offset: number) {
@@ -89,7 +121,50 @@ class Page {
     get prevPage() {
         return this.offsetPage(-1);
     }
+
+    get name() {
+        return this.#publicPath.substring((this.#parent + "/").length);
+    }
 }
 
+class ScanPage extends BasePage {
+    #scan: Scan;
+    isScan: true;
+
+    constructor(book: Book, pageNumber: PageNumber, scan: Scan) {
+        super(book, pageNumber, scan.publicPath, scan.parent);
+        this.#scan = scan;
+        this.isScan = true;
+    }
+
+    get scanProgress() {
+        return this.#scan.progress;
+    }
+}
+
+class FilePage extends BasePage {
+    #file: File;
+    isScan: false;
+
+    constructor(book: Book, pageNumber: PageNumber, file: File) {
+        super(book, pageNumber, file.publicPath, file.parent);
+        this.#file = file;
+        this.isScan = false;
+    }
+
+    get imgPath() {
+        return this.#file.publicPath;
+    }
+}
+
+type Page = ScanPage | FilePage;
+
 export default Book;
-export { Page, PageNumber, LastPage, parsePageNumber };
+export {
+    Page,
+    PageNumber,
+    LastPage,
+    parsePageNumber,
+    BOOKS_FOLDER,
+    bookFolder,
+};
