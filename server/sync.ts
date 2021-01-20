@@ -20,34 +20,34 @@ function syncImmediately() {
 
 function syncDirectory(root: string, directory: string) {
     console.log(`syncing ${directory}`);
-    const newChildPublicPaths = new Set(
+    const newChildUploadPaths = new Set(
         fs
             .readdirSync(path.join(root, directory))
             .map((child) => path.join(directory, child))
     );
-    for (const childPublicPath of newChildPublicPaths) {
-        if (fs.lstatSync(path.join(root, childPublicPath)).isDirectory()) {
-            syncDirectory(root, childPublicPath);
+    for (const childUploadPath of newChildUploadPaths) {
+        if (fs.lstatSync(path.join(root, childUploadPath)).isDirectory()) {
+            syncDirectory(root, childUploadPath);
         }
     }
 
-    const oldChildPublicPaths = new Set(
+    const oldChildUploadPaths = new Set(
         FilesCollection.find({ parent: directory })
             .fetch()
-            .map((f) => f.publicPath)
+            .map((f) => f.uploadPath)
     );
 
-    const extra = difference(oldChildPublicPaths, newChildPublicPaths);
+    const extra = difference(oldChildUploadPaths, newChildUploadPaths);
     for (let path of extra) {
         console.log(`Removing extra file: ${path}`);
-        FilesCollection.remove({ publicPath: path });
+        FilesCollection.remove({ uploadPath: path });
     }
-    const missing = difference(newChildPublicPaths, oldChildPublicPaths);
+    const missing = difference(newChildUploadPaths, oldChildUploadPaths);
     for (let path of missing) {
         console.log(`Adding missing file: ${path}`);
         FilesCollection.insert({
             parent: directory,
-            publicPath: path,
+            uploadPath: path,
         });
     }
 }

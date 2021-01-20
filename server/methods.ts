@@ -51,12 +51,12 @@ Meteor.methods({
     async scan(bookName: string, pageNumber: number) {
         // TODO: validate bookname and pageNumber
         const parent = bookFolder(bookName);
-        const publicPath = path.join(parent, `${pageNumber}.jpeg`);
-        const absoluteFilePath = path.join(getUploadsDir(), publicPath);
-        ScansCollection.remove({ publicPath });
+        const uploadPath = path.join(parent, `${pageNumber}.jpeg`);
+        const absoluteFilePath = path.join(getUploadsDir(), uploadPath);
+        ScansCollection.remove({ uploadPath });
         const scanId = ScansCollection.insert({
             parent,
-            publicPath,
+            uploadPath,
             progress: 0,
         });
         await scanFile(scanId, absoluteFilePath);

@@ -30,7 +30,7 @@ function useBooks() {
     return files.map((file) => {
         // Extract just the filename by removing the parent directory from
         // the full path.
-        return file.publicPath.substring((file.parent + "/").length);
+        return file.uploadPath.substring((file.parent + "/").length);
     });
 }
 

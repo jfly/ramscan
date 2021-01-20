@@ -5,7 +5,7 @@ import { PageNumber } from "/imports/types/book";
 import { useBook } from "/imports/ui/hooks";
 import Nav from "./Nav";
 import { paths } from "./Routes";
-import { Page } from "/imports/types/book";
+import { Page, LastPage } from "/imports/types/book";
 import Swipeable from "./Swipeable";
 import Progress from "./Progress";
 
@@ -74,8 +74,11 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
         nextEl = <div className="scanMessage">Scan new page</div>;
     }
 
-    let upEl = <div className="deleteMessage">Delete</div>;
-    let handleUp = () => {};
+    const upEl = <div className="deleteMessage">Delete</div>;
+    const handleUp = () => {}; // TODO
+
+    const handleFirst = () => history.push(paths.book(book.name, 1));
+    const handleLast = () => history.push(paths.book(book.name, LastPage));
 
     return (
         <Swipeable
@@ -85,6 +88,8 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
             onNext={handleNext}
             upEl={upEl}
             onUp={handleUp}
+            onFirst={handleFirst}
+            onLast={handleLast}
         >
             <img src={page.imgPath} />
         </Swipeable>

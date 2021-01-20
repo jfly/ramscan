@@ -56,6 +56,10 @@ const HorizontalOrVerticalDraggableView: any = class extends Interactable.View {
     }
 };
 
+function hasModifier(ev: KeyboardEvent) {
+    return ev.ctrlKey || ev.altKey || ev.metaKey || ev.shiftKey;
+}
+
 type SwipeableProps = {
     children: React.ReactNode;
 
@@ -67,6 +71,9 @@ type SwipeableProps = {
 
     upEl: React.ReactNode;
     onUp: (() => void) | null;
+
+    onFirst: (() => void) | null;
+    onLast: (() => void) | null;
 };
 function Swipeable({
     children,
@@ -76,14 +83,21 @@ function Swipeable({
     onPrev,
     upEl,
     onUp,
+    onFirst,
+    onLast,
 }: SwipeableProps) {
     const windowSize = useWindowSize();
     useKeyPress({
         onKeyDown(ev) {
+            if (hasModifier(ev)) {
+                return;
+            }
             const events = {
                 ArrowRight: onNext,
                 ArrowLeft: onPrev,
                 ArrowUp: onUp,
+                Home: onFirst,
+                End: onLast,
             } as Record<string, () => void>;
             events[ev.code]?.();
         },

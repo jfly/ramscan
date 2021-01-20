@@ -27,10 +27,10 @@ class Book {
         this.#name = name;
 
         const fileByName = _.keyBy(files, (file) =>
-            path.basename(file.publicPath, ".jpeg")
+            path.basename(file.uploadPath, ".jpeg")
         );
         const scanByName = _.keyBy(scans, (scan) =>
-            path.basename(scan.publicPath, ".jpeg")
+            path.basename(scan.uploadPath, ".jpeg")
         );
         const filenames = [
             ...Object.keys(fileByName),
@@ -85,18 +85,18 @@ class Book {
 class BasePage {
     #book: Book;
     #pageNumber: PageNumber;
-    #publicPath: string;
+    #uploadPath: string;
     #parent: string;
 
     constructor(
         book: Book,
         pageNumber: PageNumber,
-        publicPath: string,
+        uploadPath: string,
         parent: string
     ) {
         this.#book = book;
         this.#pageNumber = pageNumber;
-        this.#publicPath = publicPath;
+        this.#uploadPath = uploadPath;
         this.#parent = parent;
     }
 
@@ -129,7 +129,7 @@ class BasePage {
     }
 
     get name() {
-        return this.#publicPath.substring((this.#parent + "/").length);
+        return this.#uploadPath.substring((this.#parent + "/").length);
     }
 }
 
@@ -138,7 +138,7 @@ class ScanPage extends BasePage {
     isScan: true;
 
     constructor(book: Book, pageNumber: PageNumber, scan: Scan) {
-        super(book, pageNumber, scan.publicPath, scan.parent);
+        super(book, pageNumber, scan.uploadPath, scan.parent);
         this.#scan = scan;
         this.isScan = true;
     }
@@ -153,13 +153,13 @@ class FilePage extends BasePage {
     isScan: false;
 
     constructor(book: Book, pageNumber: PageNumber, file: File) {
-        super(book, pageNumber, file.publicPath, file.parent);
+        super(book, pageNumber, file.uploadPath, file.parent);
         this.#file = file;
         this.isScan = false;
     }
 
     get imgPath() {
-        return this.#file.publicPath;
+        return path.join("/uploads", this.#file.uploadPath);
     }
 }
 
