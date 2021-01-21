@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Meteor } from "meteor/meteor";
 import { FilesCollection } from "/imports/db/files";
 import { ScansCollection } from "/imports/db/scans";
+import { CurrentBooksCollection } from "/imports/db/currentBooks";
 import { useTracker } from "meteor/react-meteor-data";
 import Book, { BOOKS_FOLDER, bookFolder } from "/imports/types/book";
 
@@ -32,6 +33,14 @@ function useBooks() {
         // the full path.
         return file.uploadPath.substring((file.parent + "/").length);
     });
+}
+
+function useCurrentBook() {
+    const current = useTracker(() => {
+        Meteor.subscribe("currentBooks");
+        return CurrentBooksCollection.findOne();
+    });
+    return current?.bookName;
 }
 
 type WindowSize = {
@@ -87,4 +96,4 @@ function useKeyPress({ onKeyDown, onKeyUp }: UseKeyPressProps) {
     }, []); // Empty array ensures that effect is only run on mount and unmount
 }
 
-export { useBook, useBooks, useWindowSize, useKeyPress };
+export { useBook, useBooks, useCurrentBook, useWindowSize, useKeyPress };

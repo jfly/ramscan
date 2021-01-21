@@ -1,8 +1,10 @@
 import React from "react";
 import { Meteor } from "meteor/meteor";
 import { useHistory } from "react-router-dom";
+import Alert from "@material-ui/lab/Alert";
+import Button from "@material-ui/core/Button";
 import { PageNumber } from "/imports/types/book";
-import { useBook } from "/imports/ui/hooks";
+import { useBook, useCurrentBook } from "/imports/ui/hooks";
 import Nav from "./Nav";
 import { paths } from "./Routes";
 import { Page, LastPage } from "/imports/types/book";
@@ -15,9 +17,37 @@ type PagePageProps = {
 };
 function PagePage({ bookName, pageNumber }: PagePageProps) {
     const book = useBook(bookName);
+    const currentBookName = useCurrentBook();
+
+    async function handleMakeCurrent() {
+        await Meteor.call("makeCurrent", bookName);
+    }
     return (
         <>
             <Nav bookName={bookName} pageNumber={pageNumber} />
+            {currentBookName !== bookName && (
+                <Alert
+                    severity="warning"
+                    action={
+                        <Button
+                            color="inherit"
+                            size="small"
+                            onClick={handleMakeCurrent}
+                        >
+                            Make current
+                        </Button>
+                    }
+                >
+                    {currentBookName ? (
+                        <>
+                            This is not the current book (scans will go to book{" "}
+                            <strong>{currentBookName}</strong> instead)
+                        </>
+                    ) : (
+                        <>There is no current book</>
+                    )}
+                </Alert>
+            )}
             {book.pages.length == 0 ? (
                 "No pages scanned yet!"
             ) : (

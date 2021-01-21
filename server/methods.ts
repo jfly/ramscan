@@ -1,7 +1,9 @@
 import { Meteor } from "meteor/meteor";
 import path from "path";
 import { ScansCollection } from "/imports/db/scans";
-import { bookFolder } from "/imports/types/book";
+import { FilesCollection } from "/imports/db/files";
+import { CurrentBooksCollection } from "/imports/db/currentBooks";
+import Book, { bookFolder } from "/imports/types/book";
 import { getProjectRootDir, getUploadsDir } from "./util";
 import { spawn } from "child_process";
 
@@ -11,7 +13,18 @@ function getScriptsDir() {
 
 const PROGRESS_RE = /Progress: (?<progress>[0-9]+(.[0-9]+)?)%/;
 
-function scanFile(scanId: string, absoluteFilePath: string): Promise<void> {
+function scanFile(bookName: string, pageNumber: number): Promise<void> {
+    // TODO: validate bookname and pageNumber
+    const parent = bookFolder(bookName);
+    const uploadPath = path.join(parent, `${pageNumber}.jpeg`);
+    const absoluteFilePath = path.join(getUploadsDir(), uploadPath);
+    ScansCollection.remove({ uploadPath });
+    const scanId = ScansCollection.insert({
+        parent,
+        uploadPath,
+        progress: 0,
+    });
+
     const scanScript = path.join(getScriptsDir(), "scan.sh");
 
     const scan = spawn(scanScript, [absoluteFilePath]);
@@ -56,18 +69,33 @@ function scanFile(scanId: string, absoluteFilePath: string): Promise<void> {
     });
 }
 
+function getBook(name: string) {
+    const files = FilesCollection.find({
+        parent: bookFolder(name),
+    }).fetch();
+    const scans = ScansCollection.find({
+        parent: bookFolder(name),
+    }).fetch();
+    return new Book(name, files, scans);
+}
+
+async function scanCurrentBook() {
+    const current = CurrentBooksCollection.findOne();
+    if (!current || !current.bookName) {
+        throw new Error("No book currently selected");
+    }
+    const name = current.bookName;
+    const currentBook = getBook(name);
+    await scanFile(name, currentBook.pages.length + 1);
+}
+
 Meteor.methods({
     async scan(bookName: string, pageNumber: number) {
-        // TODO: validate bookname and pageNumber
-        const parent = bookFolder(bookName);
-        const uploadPath = path.join(parent, `${pageNumber}.jpeg`);
-        const absoluteFilePath = path.join(getUploadsDir(), uploadPath);
-        ScansCollection.remove({ uploadPath });
-        const scanId = ScansCollection.insert({
-            parent,
-            uploadPath,
-            progress: 0,
-        });
-        await scanFile(scanId, absoluteFilePath);
+        await scanFile(bookName, pageNumber);
+    },
+    makeCurrent(bookName: string) {
+        CurrentBooksCollection.upsert({}, { bookName });
     },
 });
+
+export { scanCurrentBook };
