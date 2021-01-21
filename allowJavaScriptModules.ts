@@ -3,3 +3,5 @@
 
 declare module "react-interactable";
 declare module "react-native";
+// @ts-ignore: Variable 'Restivus' implicitly has an 'any' type.
+declare var Restivus;
