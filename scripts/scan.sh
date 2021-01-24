@@ -24,7 +24,21 @@ function fakeit() {
     printf "\rProgress: 100%%"
 }
 
+# This whole pause/unpause thing shouldn't be necessary. scanbm *should*
+# automatically do this for us, but I cannot get it working for the life of me:
+# https://wiki.archlinux.org/index.php/Scanner_Button_Daemon
+function pause_scanbd() {
+    sudo kill -s SIGUSR1 "$(pidof scanbd)"
+    sleep 0.5
+}
+
+function unpause_scanbd() {
+    sudo kill -s SIGUSR2 "$(pidof scanbd)"
+}
+
 function scanit() {
+    pause_scanbd
+    trap unpause_scanbd EXIT
     DEVICE=pixma:04A91913_4B6895
     scanimage --device "$DEVICE" --format=jpeg --output-file "$__tmp_file" --resolution 300 --progress
 }
