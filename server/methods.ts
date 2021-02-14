@@ -1,20 +1,26 @@
 import { Meteor } from "meteor/meteor";
+import fs from "fs";
 import path from "path";
 import { ScansCollection } from "/imports/db/scans";
 import { FilesCollection } from "/imports/db/files";
 import { CurrentBooksCollection } from "/imports/db/currentBooks";
 import Book, { bookFolder } from "/imports/types/book";
-import { getProjectRootDir, getUploadsDir } from "./util";
+import { getScriptsDir, getUploadsDir } from "./util";
 import { spawn } from "child_process";
-
-function getScriptsDir() {
-    return path.join(getProjectRootDir(), "scripts");
-}
 
 const PROGRESS_RE = /Progress: (?<progress>[0-9]+(.[0-9]+)?)%/;
 
+const BOOK_NAME_RE = /^[A-Za-z 0-9]*$/;
+
+function validateBookName(bookName: string) {
+    if (!bookName.match(BOOK_NAME_RE)) {
+        throw `Invalid book name: ${bookName}`;
+    }
+}
+
 function scanFile(bookName: string, pageNumber: number): Promise<void> {
-    // TODO: validate bookname and pageNumber
+    validateBookName(bookName);
+    // TODO: validate pageNumber
     const parent = bookFolder(bookName);
     const uploadPath = path.join(parent, `${pageNumber}.jpeg`);
     const absoluteFilePath = path.join(getUploadsDir(), uploadPath);
@@ -91,10 +97,18 @@ async function scanCurrentBook() {
 
 Meteor.methods({
     async scan(bookName: string, pageNumber: number) {
+        validateBookName(bookName);
         await scanFile(bookName, pageNumber);
     },
     makeCurrent(bookName: string) {
+        validateBookName(bookName);
         CurrentBooksCollection.upsert({}, { bookName });
+    },
+    "books.add": function (bookName: string) {
+        validateBookName(bookName);
+        const folder = bookFolder(bookName);
+        const absoluteFolder = path.join(getUploadsDir(), folder);
+        fs.mkdirSync(absoluteFolder);
     },
 });
 
