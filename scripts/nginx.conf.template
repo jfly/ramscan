@@ -15,7 +15,7 @@ http {
 
     server {
         server_name localhost;
-        listen 0.0.0.0:3000;
+        listen 0.0.0.0:{{ PORT }};
 
         location / {
             proxy_pass http://meteor;

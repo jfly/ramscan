@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # Copied from https://github.com/jfly/dotfiles/blob/4503f99aebafb6074521d439fdfc2c88066a74d4/commonrc/aliases#L187
 function start_tmux {
     function print_usage {
@@ -34,6 +36,13 @@ function start_tmux {
 }
 
 
+cd /ramscan
+# Note that we run the main app in a loop because it often starts up before
+# mongo, and then crashes while trying to connect to the database. This has a
+# side effect of also causing us to restart if the app crashes for any
+# reason, which may or may not be useful...
 start_tmux ramscan \
     scanbd "SANE_CONFIG_DIR=/etc/scanbd/sane.d/ sudo -E scanbd -f -c /etc/scanbd/scanbd.conf" \
-    meteor "echo TODO: run meteor here"
+    mongodb "sudo docker rm -f mongodb && sudo docker run --name mongodb -p 27017:27017 mongo" \
+    nginx "PORT=80 sudo -E scripts/nginx.sh" \
+    meteor "while true; do RAMSCAN_ROOT=/ramscan MONGO_URL='mongodb://localhost:27017/ramscan' ROOT_URL='http://$(cat /etc/hostname):3000' PORT=3001 node ~/bundle/main.js; sleep 5; done"
