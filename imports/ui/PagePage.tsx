@@ -4,6 +4,8 @@ import { useHistory } from "react-router-dom";
 import Alert from "@material-ui/lab/Alert";
 import Button from "@material-ui/core/Button";
 import DeleteIcon from "@material-ui/icons/Delete";
+import MergeTypeIcon from "@material-ui/icons/MergeType";
+import ScannerIcon from "@material-ui/icons/Scanner";
 import { PageNumber } from "/imports/types/book";
 import { useBook, useCurrentBook } from "/imports/ui/hooks";
 import Nav from "./Nav";
@@ -120,16 +122,20 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
         }
     }
     const upEl = (
-        <div className="deleteMessage">
-            <Button
-                variant="contained"
-                color="secondary"
-                size="large"
-                onClick={handleDelete}
-                startIcon={<DeleteIcon />}
-            >
-                Delete
-            </Button>
+        <div className="extraArea">
+            {page.isFile ? (
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    size="large"
+                    onClick={handleDelete}
+                    startIcon={<DeleteIcon />}
+                >
+                    Delete
+                </Button>
+            ) : (
+                <div> Nothing to do here</div>
+            )}
         </div>
     );
     const handleUp = () => {};
@@ -149,11 +155,80 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
             onLast={handleLast}
         >
             {page.isMissing ? (
-                <div>This page is missing!</div>
+                <div className="missingContent">
+                    <p>This page is missing! Your options:</p>
+                    <p>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            size="large"
+                            onClick={() =>
+                                Meteor.call(
+                                    "scan",
+                                    page.book.name,
+                                    page.absPageNumber
+                                )
+                            }
+                            startIcon={<ScannerIcon />}
+                        >
+                            Rescan
+                        </Button>{" "}
+                        Select this if you want to rescan this page.
+                    </p>
+                    <p>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            size="large"
+                            onClick={() => defragMissingPage(page)}
+                            startIcon={<MergeTypeIcon />}
+                        >
+                            Defragment
+                        </Button>{" "}
+                        Select this if you really just want this page gone. This
+                        will renumber all subsequent pages so they start at{" "}
+                        {page.absPageNumber} instead of{" "}
+                        {nextPage?.absPageNumber}.
+                    </p>
+                </div>
             ) : (
                 <img src={page.imgPath} />
             )}
         </Swipeable>
+    );
+}
+
+type Rename = {
+    oldNumber: number;
+    newNumber: number;
+};
+function defragMissingPage(page: Page) {
+    let dryRun = true;
+    Meteor.call(
+        "defragMissingPage",
+        page.book.name,
+        page.absPageNumber,
+        dryRun,
+        function (error: any, renames: Rename[]) {
+            if (error) {
+                throw error;
+            }
+
+            let message =
+                "Are you sure you want shift everything down? This will perform the following renames:\n";
+            for (const rename of renames) {
+                message += `${rename.oldNumber} -> ${rename.newNumber}\n`;
+            }
+            if (confirm(message)) {
+                dryRun = false;
+                Meteor.call(
+                    "defragMissingPage",
+                    page.book.name,
+                    page.absPageNumber,
+                    dryRun
+                );
+            }
+        }
     );
 }
 

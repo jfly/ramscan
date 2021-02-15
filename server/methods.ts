@@ -137,6 +137,52 @@ Meteor.methods({
         );
         fs.unlinkSync(absoluteFilePath);
     },
+    defragMissingPage(bookName: string, pageNumber: number, dryRun: boolean) {
+        validateBookName(bookName);
+        const { absoluteFilePath } = getPageFilesystemInfo(
+            bookName,
+            pageNumber
+        );
+        if (fs.existsSync(absoluteFilePath)) {
+            throw new Error(
+                `This is definitely not a missing page: ${bookName} ${pageNumber}. This file exists: ${absoluteFilePath}`
+            );
+        }
+
+        const book = getBook(bookName);
+        let page = book.getPage(pageNumber);
+
+        // Build up a list of file renames to perform.
+        const renames = [];
+        while (page.nextPage) {
+            if (page.nextPage.isFile) {
+                renames.push({
+                    oldNumber: page.nextPage.absPageNumber,
+                    newNumber: page.absPageNumber,
+                });
+            }
+            page = page.nextPage;
+        }
+
+        if (!dryRun) {
+            console.log(
+                `defragMissingPage, about to perform these renames: ${renames}`
+            );
+            // Now perform the renames!
+            for (const { oldNumber, newNumber } of renames) {
+                const { absoluteFilePath: oldPath } = getPageFilesystemInfo(
+                    bookName,
+                    oldNumber
+                );
+                const { absoluteFilePath: newPath } = getPageFilesystemInfo(
+                    bookName,
+                    newNumber
+                );
+                fs.renameSync(oldPath, newPath);
+            }
+        }
+        return renames;
+    },
     makeCurrent(bookName: string) {
         validateBookName(bookName);
         CurrentBooksCollection.upsert({}, { bookName });

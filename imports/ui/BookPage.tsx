@@ -1,4 +1,5 @@
 import React from "react";
+import Chip from "@material-ui/core/Chip";
 import Nav from "./Nav";
 import { useBook } from "./hooks";
 import { Link } from "react-router-dom";
@@ -21,6 +22,9 @@ const BookPage = ({ name }: BookPageProps) => {
                         <Link to={paths.book(book.name, page.pageNumber)}>
                             Page {page.pageNumber} ({page.name})
                         </Link>
+                        {page.isMissing && (
+                            <Chip color="secondary" label="Missing" />
+                        )}
                     </li>
                 ))}
             </ul>

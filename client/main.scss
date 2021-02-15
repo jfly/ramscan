@@ -29,6 +29,13 @@ img {
     -webkit-user-drag: none;
 }
 
+.missingContent {
+    width: 100%;
+    max-width: 500px;
+    align-self: center;
+    box-sizing: border-box;
+}
+
 .swipeable {
     height: 100%;
     display: flex;
@@ -67,7 +74,7 @@ img {
     }
 }
 
-.deleteMessage {
+.extraArea {
     width: 100%;
     text-align: center;
     font-size: 3rem;
