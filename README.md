@@ -13,7 +13,10 @@ And see it running on http://localhost:3000!
 
     # Follow the instructions here: https://github.com/jfly/jpi#basic-arch
     ssh alarm@alarmpi
+    echo "ramscan" > /etc/hostname
+    sudo reboot
 
+    ssh alarm@ramscan
     sudo pacman -S sane
 
     sudo scanimage -L  # confirm that you see your printer listed
@@ -26,14 +29,14 @@ And see it running on http://localhost:3000!
     scanimage -L  # confirm that you still see your printer listed
 
     # Install + configure misc stuff
-    sudo pacman -S nodejs npm nginx vim tmux rsync
+    sudo pacman -S nodejs npm nginx vim tmux rsync imagemagick
     sudo systemctl start nginx && sudo systemctl stop nginx  # needed to create the various /var/lib/nginx/* directories nginx needs
     sudo vim /etc/locale.gen  # uncomment en_US.UTF-8 UTF-8
     sudo locale-gen
 
     # Install + start up docker
     sudo pacman -S docker
-    sudo systemctl enable --now docker
+    sudo systemctl enable --now docker.service
 
     # Clone ramscan
     # Create ramscan directory
@@ -70,8 +73,9 @@ sudo sed -i 's/^net$/# net # Commented out for scandb/' /etc/scanbd/sane.d/dll.c
 
     # 4. Set up ramscan to start on boot
     echo '[Unit]
-
 Description=Start up ramscan tmux session
+After=docker.service
+Requires=docker.service
 
 [Service]
 Type=oneshot

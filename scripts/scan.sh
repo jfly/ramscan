@@ -41,6 +41,7 @@ function scanit() {
     trap unpause_scanbd EXIT
     DEVICE=pixma:04A91913_4B6895
     scanimage --device "$DEVICE" --format=jpeg --output-file "$__tmp_file" --resolution 300 --progress
+    mogrify -rotate -90 "$__tmp_file"
 }
 
 # fakeit

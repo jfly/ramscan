@@ -6,6 +6,6 @@ function log() {
 }
 log "Begin of $SCANBD_ACTION ($SCANBD_TARGET) for device $SCANBD_DEVICE"
 
-curl -i -X POST localhost:3000/api/v1/scan
+curl -i -X POST localhost:80/api/v1/scan
 
 log "End of $SCANBD_ACTION ($SCANBD_TARGET) for device $SCANBD_DEVICE"
