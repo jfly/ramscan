@@ -121,15 +121,12 @@ class Book {
         }
     }
 
-    getPage(pageNumber: PageNumber): Page {
+    getPage(pageNumber: PageNumber): Page | null {
         const absPageNumber = this.getAbsolutePageNumber(pageNumber);
         if (!absPageNumber) {
-            throw `Invalid pageNumber: ${pageNumber} (abs: ${absPageNumber})`;
+            return null;
         }
         const page = this.#pageByNumber[absPageNumber];
-        if (!page) {
-            throw `Invalid pageNumber: ${pageNumber} (abs: ${absPageNumber})`;
-        }
         return page;
     }
 }
@@ -166,8 +163,11 @@ class BasePage {
 
     private offsetPage(offset: number) {
         const index = this.book.pages.indexOf((this as unknown) as Page);
+        if (index < 0) {
+            throw new Error(`Current page not found?! ${this.absPageNumber}`);
+        }
         const offsetIndex = index + offset;
-        if (offsetIndex <= 0 || offsetIndex > this.#book.pages.length) {
+        if (offsetIndex < 0 || offsetIndex >= this.#book.pages.length) {
             return null;
         }
         return this.#book.pages[offsetIndex];

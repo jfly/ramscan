@@ -96,8 +96,9 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
     const nextPage = page.nextPage;
     let handleNext, nextEl;
     if (nextPage) {
-        handleNext = () =>
+        handleNext = () => {
             history.push(paths.book(book.name, nextPage.pageNumber));
+        };
         if (nextPage.isScan) {
             nextEl = <div>A scan is happening over here</div>;
         } else if (nextPage.isMissing) {

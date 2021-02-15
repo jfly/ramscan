@@ -93,7 +93,7 @@ function useKeyPress({ onKeyDown, onKeyUp }: UseKeyPressProps) {
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keyup", onKeyUp);
         };
-    }, []); // Empty array ensures that effect is only run on mount and unmount
+    }, [onKeyDown, onKeyUp]);
 }
 
 export { useBook, useBooks, useCurrentBook, useWindowSize, useKeyPress };

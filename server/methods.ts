@@ -124,6 +124,7 @@ async function scanCurrentBook() {
 Meteor.methods({
     async scan(bookName: string, pageNumber: number) {
         validateBookName(bookName);
+        console.log(`Scanning ${bookName} page ${pageNumber}`);
         await scanFile(bookName, pageNumber);
     },
     deletePage(bookName: string, pageNumber: number) {
@@ -152,6 +153,10 @@ Meteor.methods({
         const book = getBook(bookName);
         let page = book.getPage(pageNumber);
 
+        if (!page) {
+            throw new Error(`Page ${pageNumber} not found`);
+        }
+
         // Build up a list of file renames to perform.
         const renames = [];
         while (page.nextPage) {
@@ -166,7 +171,9 @@ Meteor.methods({
 
         if (!dryRun) {
             console.log(
-                `defragMissingPage, about to perform these renames: ${renames}`
+                `defragMissingPage, about to perform these renames: ${JSON.stringify(
+                    renames
+                )}`
             );
             // Now perform the renames!
             for (const { oldNumber, newNumber } of renames) {
