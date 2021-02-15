@@ -44,6 +44,6 @@ function scanit() {
     mogrify -rotate -90 "$__tmp_file"
 }
 
-fakeit
-# scanit
+# fakeit
+scanit
 mv "$__tmp_file" "$__output_file"
