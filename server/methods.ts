@@ -36,6 +36,9 @@ function scanFile(bookName: string, pageNumber: number): Promise<void> {
         bookName,
         pageNumber
     );
+    if (fs.existsSync(absoluteFilePath)) {
+        throw `File already exists: ${absoluteFilePath}`;
+    }
     ScansCollection.remove({ uploadPath });
     const scanId = ScansCollection.insert({
         parent,
@@ -115,7 +118,7 @@ async function scanCurrentBook() {
     }
     const name = current.bookName;
     const currentBook = getBook(name);
-    await scanFile(name, currentBook.pages.length + 1);
+    await scanFile(name, currentBook.nextPageNumber);
 }
 
 Meteor.methods({

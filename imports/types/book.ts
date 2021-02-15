@@ -23,6 +23,7 @@ function parsePageNumber(pageNumberStr: string): PageNumber {
 class Book {
     #name: string;
     #pages: Page[];
+    #pageByNumber: Record<number, Page | null>;
     constructor(name: string, files: File[], scans: Scan[]) {
         this.#name = name;
 
@@ -40,23 +41,46 @@ class Book {
             .map((filename) => parseInt(filename))
             .filter((n) => !isNaN(n));
         const lastPageNumber = Math.max(...numbers);
+        this.#pageByNumber = {};
         this.#pages = [];
-        for (
-            let absPageNumber = 1;
-            absPageNumber <= lastPageNumber;
-            absPageNumber++
-        ) {
-            const pageNumber =
-                absPageNumber == lastPageNumber ? LastPage : absPageNumber;
+        let absPageNumber;
+        do {
+            absPageNumber = this.nextPageNumber;
+            let page = null;
             if (fileByName[absPageNumber]) {
-                this.#pages.push(
-                    new FilePage(this, pageNumber, fileByName[absPageNumber])
+                page = new FilePage(
+                    this,
+                    absPageNumber,
+                    fileByName[absPageNumber]
                 );
             } else if (scanByName[absPageNumber]) {
-                this.#pages.push(
-                    new ScanPage(this, pageNumber, scanByName[absPageNumber])
+                page = new ScanPage(
+                    this,
+                    absPageNumber,
+                    scanByName[absPageNumber]
                 );
+            } else {
+                const uploadPath = path.join(
+                    bookFolder(name),
+                    `${absPageNumber}.jpeg`
+                );
+                page = new MissingPage(this, absPageNumber, uploadPath);
             }
+            this.#pageByNumber[absPageNumber] = page;
+            this.#pages.push(page);
+        } while (absPageNumber <= lastPageNumber);
+        // Trim any trailing missing pages
+        while (true) {
+            const lastPage = this.lastPage;
+            if (!lastPage || !lastPage.isMissing) {
+                break;
+            }
+            // Remove this trailing missing page.
+            const page = this.#pages.pop();
+            if (!page) {
+                throw "Impossible?";
+            }
+            delete this.#pageByNumber[page.absPageNumber];
         }
     }
 
@@ -68,34 +92,62 @@ class Book {
         return this.#pages;
     }
 
-    getAbsolutePageNumber(pageNumber: PageNumber): number {
-        return pageNumber == LastPage ? this.#pages.length : pageNumber;
+    get lastPage(): Page | null {
+        return this.#pages.length == 0
+            ? null
+            : this.#pages[this.#pages.length - 1];
+    }
+
+    getRelativePageNumber(pageNumber: number): PageNumber {
+        return pageNumber == this.lastPage?.absPageNumber
+            ? LastPage
+            : pageNumber;
+    }
+
+    getAbsolutePageNumber(pageNumber: PageNumber): number | null {
+        return pageNumber == LastPage
+            ? this.lastPage?.absPageNumber ?? null
+            : pageNumber;
+    }
+
+    get nextPageNumber(): number {
+        // 1, 2, 4, 6, 8, ...
+        if (!this.lastPage) {
+            return 1;
+        } else if (this.lastPage.absPageNumber == 1) {
+            return 2;
+        } else {
+            return this.lastPage.absPageNumber + 2;
+        }
     }
 
     getPage(pageNumber: PageNumber): Page {
         const absPageNumber = this.getAbsolutePageNumber(pageNumber);
-        const index = absPageNumber - 1;
-        if (index < 0 || index >= this.#pages.length) {
-            throw `Invalid pageNumber: ${pageNumber}`;
+        if (!absPageNumber) {
+            throw `Invalid pageNumber: ${pageNumber} (abs: ${absPageNumber})`;
         }
-        return this.#pages[index];
+        const page = this.#pageByNumber[absPageNumber];
+        if (!page) {
+            throw `Invalid pageNumber: ${pageNumber} (abs: ${absPageNumber})`;
+        }
+        return page;
     }
 }
 
 class BasePage {
     #book: Book;
-    #pageNumber: PageNumber;
+    #absPageNumber: number;
     #uploadPath: string;
     #parent: string;
 
     constructor(
         book: Book,
-        pageNumber: PageNumber,
+        absPageNumber: number,
         uploadPath: string,
         parent: string
     ) {
         this.#book = book;
-        this.#pageNumber = pageNumber;
+        this.#absPageNumber = absPageNumber;
         this.#uploadPath = uploadPath;
         this.#parent = parent;
     }
@@ -104,20 +156,21 @@ class BasePage {
         return this.#book;
     }
 
-    get pageNumber() {
-        return this.#pageNumber;
+    get pageNumber(): PageNumber {
+        return this.book.getRelativePageNumber(this.#absPageNumber);
     }
 
     get absPageNumber() {
-        return this.book.getAbsolutePageNumber(this.#pageNumber);
+        return this.#absPageNumber;
     }
 
     private offsetPage(offset: number) {
-        const absPageNumber = this.absPageNumber + offset;
-        if (absPageNumber <= 0 || absPageNumber > this.#book.pages.length) {
+        const index = this.book.pages.indexOf((this as unknown) as Page);
+        const offsetIndex = index + offset;
+        if (offsetIndex <= 0 || offsetIndex > this.#book.pages.length) {
             return null;
         }
-        return this.#book.getPage(absPageNumber);
+        return this.#book.pages[offsetIndex];
     }
 
     get nextPage() {
@@ -136,11 +189,15 @@ class BasePage {
 class ScanPage extends BasePage {
     #scan: Scan;
     isScan: true;
+    isMissing: false;
+    isFile: false;
 
-    constructor(book: Book, pageNumber: PageNumber, scan: Scan) {
-        super(book, pageNumber, scan.uploadPath, scan.parent);
+    constructor(book: Book, absPageNumber: number, scan: Scan) {
+        super(book, absPageNumber, scan.uploadPath, scan.parent);
         this.#scan = scan;
         this.isScan = true;
+        this.isMissing = false;
+        this.isFile = false;
     }
 
     get scanProgress() {
@@ -148,14 +205,31 @@ class ScanPage extends BasePage {
     }
 }
 
+class MissingPage extends BasePage {
+    isScan: false;
+    isMissing: true;
+    isFile: false;
+
+    constructor(book: Book, absPageNumber: number, uploadPath: string) {
+        super(book, absPageNumber, uploadPath, path.resolve(uploadPath, ".."));
+        this.isScan = false;
+        this.isMissing = true;
+        this.isFile = false;
+    }
+}
+
 class FilePage extends BasePage {
     #file: File;
     isScan: false;
+    isMissing: false;
+    isFile: true;
 
-    constructor(book: Book, pageNumber: PageNumber, file: File) {
-        super(book, pageNumber, file.uploadPath, file.parent);
+    constructor(book: Book, absPageNumber: number, file: File) {
+        super(book, absPageNumber, file.uploadPath, file.parent);
         this.#file = file;
         this.isScan = false;
+        this.isMissing = false;
+        this.isFile = true;
     }
 
     get fileName() {
@@ -167,7 +241,7 @@ class FilePage extends BasePage {
     }
 }
 
-type Page = ScanPage | FilePage;
+type Page = ScanPage | FilePage | MissingPage;
 
 export default Book;
 export {

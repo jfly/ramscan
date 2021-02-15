@@ -81,6 +81,8 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
             history.push(paths.book(book.name, prevPage.pageNumber));
         if (prevPage.isScan) {
             prevEl = <div>A scan is happening over here</div>;
+        } else if (prevPage.isMissing) {
+            prevEl = <div>This page is missing!</div>;
         } else {
             prevEl = <img className="prevImg" src={prevPage.imgPath} />;
         }
@@ -96,12 +98,14 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
             history.push(paths.book(book.name, nextPage.pageNumber));
         if (nextPage.isScan) {
             nextEl = <div>A scan is happening over here</div>;
+        } else if (nextPage.isMissing) {
+            prevEl = <div>This page is missing!</div>;
         } else {
             nextEl = <img src={nextPage.imgPath} />;
         }
     } else {
         handleNext = () => {
-            Meteor.call("scan", page.book.name, page.absPageNumber + 1);
+            Meteor.call("scan", page.book.name, page.book.nextPageNumber);
         };
         nextEl = <div className="scanMessage">Scan new page</div>;
     }
@@ -144,7 +148,11 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
             onFirst={handleFirst}
             onLast={handleLast}
         >
-            <img src={page.imgPath} />
+            {page.isMissing ? (
+                <div>This page is missing!</div>
+            ) : (
+                <img src={page.imgPath} />
+            )}
         </Swipeable>
     );
 }
