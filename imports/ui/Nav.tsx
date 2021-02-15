@@ -2,13 +2,13 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { Breadcrumbs, Link } from "@material-ui/core";
 import { paths } from "./Routes";
-import { PageNumber } from "/imports/types/book";
+import { Page } from "/imports/types/book";
 
 type NavProps = {
     bookName: string;
-    pageNumber?: PageNumber;
+    page?: Page | null;
 };
-function Nav({ bookName, pageNumber }: NavProps) {
+function Nav({ bookName, page }: NavProps) {
     return (
         <div className="nav">
             <Breadcrumbs aria-label="breadcrumb">
@@ -23,14 +23,14 @@ function Nav({ bookName, pageNumber }: NavProps) {
                 >
                     {bookName}
                 </Link>
-                {pageNumber && (
+                {page && (
                     <Link
                         component={NavLink}
                         exact
-                        to={paths.book(bookName, pageNumber)}
+                        to={paths.book(bookName, page.pageNumber)}
                         color="textPrimary"
                     >
-                        {pageNumber}
+                        {page.pageNumber} ({!page.isScan && page.fileName})
                     </Link>
                 )}
             </Breadcrumbs>

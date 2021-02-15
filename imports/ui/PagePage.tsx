@@ -3,6 +3,7 @@ import { Meteor } from "meteor/meteor";
 import { useHistory } from "react-router-dom";
 import Alert from "@material-ui/lab/Alert";
 import Button from "@material-ui/core/Button";
+import DeleteIcon from "@material-ui/icons/Delete";
 import { PageNumber } from "/imports/types/book";
 import { useBook, useCurrentBook } from "/imports/ui/hooks";
 import Nav from "./Nav";
@@ -17,6 +18,7 @@ type PagePageProps = {
 };
 function PagePage({ bookName, pageNumber }: PagePageProps) {
     const book = useBook(bookName);
+    const page = book.pages.length == 0 ? null : book.getPage(pageNumber);
     const currentBookName = useCurrentBook();
 
     async function handleMakeCurrent() {
@@ -24,7 +26,7 @@ function PagePage({ bookName, pageNumber }: PagePageProps) {
     }
     return (
         <>
-            <Nav bookName={bookName} pageNumber={pageNumber} />
+            <Nav bookName={bookName} page={page} />
             {currentBookName !== bookName && (
                 <Alert
                     severity="warning"
@@ -48,12 +50,12 @@ function PagePage({ bookName, pageNumber }: PagePageProps) {
                     )}
                 </Alert>
             )}
-            {book.pages.length == 0 ? (
+            {!page ? (
                 "No pages scanned yet!"
             ) : (
                 <PageWithNavigation
                     key={pageNumber}
-                    page={book.getPage(pageNumber)}
+                    page={page}
                 ></PageWithNavigation>
             )}
         </>
@@ -104,8 +106,29 @@ function PageWithNavigation({ page }: PageWithNavigationProps) {
         nextEl = <div className="scanMessage">Scan new page</div>;
     }
 
-    const upEl = <div className="deleteMessage">Delete</div>;
-    const handleUp = () => {}; // TODO
+    function handleDelete() {
+        if (
+            confirm(
+                "Are you sure you want to delete this page? This cannot be undone."
+            )
+        ) {
+            Meteor.call("deletePage", page.book.name, page.absPageNumber);
+        }
+    }
+    const upEl = (
+        <div className="deleteMessage">
+            <Button
+                variant="contained"
+                color="secondary"
+                size="large"
+                onClick={handleDelete}
+                startIcon={<DeleteIcon />}
+            >
+                Delete
+            </Button>
+        </div>
+    );
+    const handleUp = () => {};
 
     const handleFirst = () => history.push(paths.book(book.name, 1));
     const handleLast = () => history.push(paths.book(book.name, LastPage));

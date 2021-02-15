@@ -18,12 +18,24 @@ function validateBookName(bookName: string) {
     }
 }
 
-function scanFile(bookName: string, pageNumber: number): Promise<void> {
+function getPageFilesystemInfo(bookName: string, pageNumber: number) {
     validateBookName(bookName);
     // TODO: validate pageNumber
     const parent = bookFolder(bookName);
     const uploadPath = path.join(parent, `${pageNumber}.jpeg`);
     const absoluteFilePath = path.join(getUploadsDir(), uploadPath);
+    return {
+        parent,
+        uploadPath,
+        absoluteFilePath,
+    };
+}
+
+function scanFile(bookName: string, pageNumber: number): Promise<void> {
+    const { parent, uploadPath, absoluteFilePath } = getPageFilesystemInfo(
+        bookName,
+        pageNumber
+    );
     ScansCollection.remove({ uploadPath });
     const scanId = ScansCollection.insert({
         parent,
@@ -64,14 +76,25 @@ function scanFile(bookName: string, pageNumber: number): Promise<void> {
         scan.stdout.on("data", onData("stdout"));
         scan.stderr.on("data", onData("stderr"));
 
-        scan.on("close", (code) => {
-            console.log(`child process exited with code ${code}`);
-            if (code == 0) {
-                resolve();
-            } else {
-                reject();
-            }
-        });
+        scan.on(
+            "close",
+            Meteor.bindEnvironment(function (code) {
+                console.log(`child process exited with code ${code}`);
+                // Wait a little bit before cleaning up the scan just to reduce
+                // the probability of flicker for a client waiting for a scan to finish.
+                // (if we quickly remove the scan before they learn about the
+                // new file, then they'll see a brief flicker of the previous
+                // last page before the new last page shows up).
+                Meteor.setTimeout(function () {
+                    ScansCollection.remove({ _id: scanId });
+                }, 500);
+                if (code == 0) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            })
+        );
     });
 }
 
@@ -99,6 +122,17 @@ Meteor.methods({
     async scan(bookName: string, pageNumber: number) {
         validateBookName(bookName);
         await scanFile(bookName, pageNumber);
+    },
+    deletePage(bookName: string, pageNumber: number) {
+        validateBookName(bookName);
+        const { absoluteFilePath } = getPageFilesystemInfo(
+            bookName,
+            pageNumber
+        );
+        console.log(
+            `Deleting ${bookName} page ${pageNumber} => ${absoluteFilePath}`
+        );
+        fs.unlinkSync(absoluteFilePath);
     },
     makeCurrent(bookName: string) {
         validateBookName(bookName);

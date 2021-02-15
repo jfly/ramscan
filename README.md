@@ -73,6 +73,7 @@ sudo sed -i 's/^net$/# net # Commented out for scandb/' /etc/scanbd/sane.d/dll.c
 
     # 4. Set up ramscan to start on boot
     echo '[Unit]
+
 Description=Start up ramscan tmux session
 After=docker.service
 Requires=docker.service

@@ -158,6 +158,10 @@ class FilePage extends BasePage {
         this.isScan = false;
     }
 
+    get fileName() {
+        return path.basename(this.#file.uploadPath);
+    }
+
     get imgPath() {
         return path.join("/uploads", this.#file.uploadPath);
     }
