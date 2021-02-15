@@ -5,6 +5,7 @@ export interface File {
     _id?: string;
     parent: string;
     uploadPath: string;
+    mtime: number;
 }
 const FilesCollection = new Mongo.Collection<File>("files");
 if (Meteor.isServer) {

@@ -237,7 +237,13 @@ class FilePage extends BasePage {
     }
 
     get imgPath() {
-        return path.join("/uploads", this.#file.uploadPath);
+        // Chrome on Android does some pretty aggressive disk based caching. I
+        // don't want to give every scan a unique filename, so we use a query
+        // param to bust the cache.
+        return (
+            path.join("/uploads", this.#file.uploadPath) +
+            `?ts=${this.#file.mtime}`
+        );
     }
 }
 
