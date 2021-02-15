@@ -1,6 +1,6 @@
 .PHONY: run
 run:
-	npx concurrently --kill-others-on-fail scripts/nginx.sh 'meteor run --port 3001'
+	RAMSCAN_FAKE_SCANNER=true npx concurrently --kill-others-on-fail scripts/nginx.sh 'meteor run --port 3001'
 
 .PHONY: check
 check:

@@ -25,6 +25,9 @@ const BookPage = ({ name }: BookPageProps) => {
                         {page.isMissing && (
                             <Chip color="secondary" label="Missing" />
                         )}
+                        {page.isScan && (
+                            <Chip color="primary" label="Scanning" />
+                        )}
                     </li>
                 ))}
             </ul>

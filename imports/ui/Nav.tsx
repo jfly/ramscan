@@ -23,30 +23,39 @@ function Nav({ bookName, page }: NavProps) {
                 >
                     {bookName}
                 </Link>
-                {page && (
-                    <Link
-                        component={NavLink}
-                        exact
-                        to={paths.book(bookName, page.pageNumber)}
-                        color="textPrimary"
-                    >
-                        {page.pageNumber}
-                    </Link>
-                )}
-                {page &&
-                    (page.pageNumber == LastPage ? (
-                        <span>({page.name})</span>
-                    ) : (
-                        <span>
-                            (
-                            <RRLink to={paths.book(bookName, LastPage)}>
-                                go to last page
-                            </RRLink>
-                            )
-                        </span>
-                    ))}
+                {page && <PageLink page={page} />}
             </Breadcrumbs>
         </div>
+    );
+}
+
+type PageLinkProps = {
+    page: Page;
+};
+function PageLink({ page }: PageLinkProps) {
+    const bookName = page.book.name;
+    return (
+        <>
+            <Link
+                component={NavLink}
+                exact
+                to={paths.book(bookName, page.pageNumber)}
+                color="textPrimary"
+            >
+                {page.pageNumber}
+            </Link>{" "}
+            {page.pageNumber == LastPage ? (
+                <span>({page.name})</span>
+            ) : (
+                <span>
+                    (
+                    <RRLink to={paths.book(bookName, LastPage)}>
+                        go to last page
+                    </RRLink>
+                    )
+                </span>
+            )}
+        </>
     );
 }
 

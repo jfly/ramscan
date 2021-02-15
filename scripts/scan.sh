@@ -44,6 +44,9 @@ function scanit() {
     mogrify -rotate -90 "$__tmp_file"
 }
 
-# fakeit
-scanit
+if [ "$RAMSCAN_FAKE_SCANNER" != "" ]; then
+    fakeit
+else
+    scanit
+fi
 mv "$__tmp_file" "$__output_file"
