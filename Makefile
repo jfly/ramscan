@@ -23,4 +23,4 @@ deploy:
 	# Copy over some useful scripts.
 	rsync -avP scripts/ alarm@ramscan:/ramscan/scripts/
 	# Ensure a books upload folder exists.
-	ssh alarm@ramscan "mkdir -p /ramscan/uploadsbooks"
+	ssh alarm@ramscan "mkdir -p /ramscan/uploads/books"
