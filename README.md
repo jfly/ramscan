@@ -29,7 +29,7 @@ And see it running on http://localhost:3000!
     scanimage -L  # confirm that you still see your printer listed
 
     # Install + configure misc stuff
-    sudo pacman -S nodejs npm nginx vim tmux rsync imagemagick
+    sudo pacman -S nodejs-lts-fermium npm nginx vim tmux rsync imagemagick
     sudo systemctl start nginx && sudo systemctl stop nginx  # needed to create the various /var/lib/nginx/* directories nginx needs
     sudo vim /etc/locale.gen  # uncomment en_US.UTF-8 UTF-8
     sudo locale-gen
