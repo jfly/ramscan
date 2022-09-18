@@ -41,8 +41,12 @@ cd /ramscan
 # mongo, and then crashes while trying to connect to the database. This has a
 # side effect of also causing us to restart if the app crashes for any
 # reason, which may or may not be useful...
+
+# Note: we're using mongo 4 because mongo 5 dropped support for the flavor of
+# arm that the Raspberry Pi 3B+ has:
+# https://jira.mongodb.org/browse/SERVER-55178
 start_tmux ramscan \
     scanbd "SANE_CONFIG_DIR=/etc/scanbd/sane.d/ sudo -E scanbd -f -c /etc/scanbd/scanbd.conf" \
-    mongodb "sudo docker rm -f mongodb && sudo docker run --name mongodb -p 27017:27017 mongo" \
+    mongodb "sudo docker rm -f mongodb && sudo docker run --name mongodb -p 27017:27017 mongo:4.4.11" \
     nginx "PORT=80 sudo -E scripts/nginx.sh" \
     meteor "while true; do RAMSCAN_ROOT=/ramscan MONGO_URL='mongodb://localhost:27017/ramscan' ROOT_URL='http://$(cat /etc/hostname):3000' PORT=3001 node ~/bundle/main.js; sleep 5; done"

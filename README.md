@@ -1,3 +1,10 @@
+## Dependencies
+
+    node 14.18.3
+    npm install -g meteor@2.5.6
+    meteor npm install resolve@1.20.0  # https://github.com/meteor/meteor/issues/11830#issuecomment-1005900459
+    export PATH=~/.meteor  # apparently meteor is supposed to automagically do this? it's not happening for me. see https://github.com/meteor/meteor/issues/11807#issuecomment-998732320 and https://github.com/meteor/meteor/issues/11863
+
 ## Running the app
 
     $ make run
@@ -19,14 +26,15 @@ And see it running on http://localhost:3000!
     ssh alarm@ramscan
     sudo pacman -S sane
 
-    sudo scanimage -L  # confirm that you see your printer listed
+    sudo scanimage -L  # confirm that you see your scanner listed
 
     # Fixup scanner permissions (from https://wiki.archlinux.org/index.php/SANE#Permission_problem)
     sudo pacman -S usbutils
     sudo usermod -a -G scanner alarm
     sudo usermod -a -G lp alarm
+    sudo reboot
 
-    scanimage -L  # confirm that you still see your printer listed
+    scanimage -L  # confirm that you still see your scanner listed
 
     # Install + configure misc stuff
     sudo pacman -S nodejs-lts-fermium npm nginx vim tmux rsync imagemagick
@@ -34,15 +42,21 @@ And see it running on http://localhost:3000!
     sudo vim /etc/locale.gen  # uncomment en_US.UTF-8 UTF-8
     sudo locale-gen
 
+    # HACK ALERT (this is to hack around https://bugzilla.redhat.com/show_bug.cgi?id=1791952)
+    # This causes problems when running `npm install` on the RPI when
+    # deploying. Maybe a newer version of Meteor would have a newer version of
+    # node-gyp without this problem?
+    sudo vi /usr/lib/python3.10/collections/__init__.py # add as very first line: from .abc import MutableSet
+
     # Install + start up docker
     sudo pacman -S docker
     sudo systemctl enable --now docker.service
 
-    # Clone ramscan
-    # Create ramscan directory
+    # *** On ramscan *** (create ramscan directory)
     sudo mkdir /ramscan
     sudo chown alarm:alarm /ramscan
-    make deploy
+    # *** On laptop *** (in clone of this repo)
+    make deploy  # this will take a while!
 
     # Set up samba share of the /uploads directory
     sudo pacman -S samba
@@ -202,14 +216,14 @@ EOF
     echo 'net' | sudo tee /etc/sane.d/dll.conf  # remove everything but 'net'
     echo 'connect_timeout = 3
 
-localhost # scanbm is listening on localhost' | sudo tee /etc/sane.d/net.conf
+localhost # scanbd is listening on localhost' | sudo tee /etc/sane.d/net.conf
 sudo sed -i 's/^net$/# net # Commented out for scandb/' /etc/scanbd/sane.d/dll.conf # comment out 'net'
 
     # 3. jfly specific hacks
     #    For whatever reason, enabling the services doesn't work. Instead I:
     #      - Change user to `root` in /etc/scanbd/scanbd.conf
     #      - Change `debug-level` to `2` in /etc/scanbd/scanbd.conf
-    #      - Change `script = "/ramscan/scripts/scanbd-action.sh"` in /etc/scanbd/scanner.d/pixma.conf
+    #      - Change all `script = "/ramscan/scripts/scanbd-action.sh"` in /etc/scanbd/scanner.d/pixma.conf
 
     # 4. Set up ramscan to start on boot
     echo '[Unit]
